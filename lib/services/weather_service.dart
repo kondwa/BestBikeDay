@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WeatherService {
-  static const String _apiKey = '7a61540cac7688b35ca6bd125d54401e'; // Replace with your API key
+  static String get _apiKey => dotenv.env['OPENWEATHER_API_KEY'] ?? '';
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5';
 
   Future<Position> getCurrentLocation() async {
@@ -24,6 +25,10 @@ class WeatherService {
   }
 
   Future<Map<String, dynamic>> getWeatherForecast() async {
+    if (_apiKey.isEmpty) {
+      throw Exception('API key not found in environment variables');
+    }
+
     try {
       final position = await getCurrentLocation();
       final url = "$_baseUrl/forecast?lat=${position.latitude}&lon=${position.longitude}&units=metric&appid=$_apiKey";
@@ -33,7 +38,7 @@ class WeatherService {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        throw Exception('Failed to load weather data for url $url');
+        throw Exception('Failed to load weather data');
       }
     } catch (e) {
       throw Exception('Error getting weather: $e');
